@@ -28,6 +28,7 @@ struct station {
 
 inline unsigned int hash(const char *s);
 struct station *search(char *key, struct station *hash_table[]);
+void insert(unsigned int hash_value,struct station *key,  struct station *hash_table[]);
 int comparator(const void *p1, const void *p2);
 
 int main(int argc, char **argv)
@@ -36,7 +37,6 @@ int main(int argc, char **argv)
 	FILE *fp = NULL;
 	char data_buffer[DATA_BUFFER_SIZE];
 	struct station *results[MAX_STATIONS];
-	struct station *lost_pointers[MAX_STATIONS];
 	struct station *sorted_stations = NULL;
 	struct station tmp_station = {	.name = "",
 	       				.min=0.0, 
@@ -49,15 +49,10 @@ int main(int argc, char **argv)
 	unsigned int tmp_hash = 0;
 	int station_count = 0;
 	int sorted_stations_index = 0;
-	int lost_stations_counter = 0;
-
-	time_t start_time, stop_time;
-	time(&start_time);
 
 	/* Buffer initializations */
 	memset(results, 0, MAX_STATIONS * sizeof(struct station *));
 	memset(data_buffer, 0, DATA_BUFFER_SIZE * sizeof(char));
-	memset(lost_pointers, 0, MAX_STATIONS * sizeof(struct station *));
 
 	/* Checking for the correct number of user supplied arguments */
 	if(argc != 2) {
@@ -103,29 +98,8 @@ int main(int argc, char **argv)
 			pTest->sum += tmp_station.last_value;
 			pTest->mean = pTest->sum / (double) pTest->number_of_measurements;
 
-
 		} else {
-			results[tmp_hash] = (struct station * ) malloc(sizeof(struct station));
-			lost_pointers[lost_stations_counter++] = results[tmp_hash];
-
-			if (results[tmp_hash] == NULL) {
-				fprintf(stderr, "Allocation of memory failed!\n");
-				exit(EXIT_FAILURE);
-			}
-			memset(&(results[tmp_hash]->name), 0, STATION_NAME_SIZE); 
-			results[tmp_hash]->min = 0.0;
-			results[tmp_hash]->max = 0.0;
-			results[tmp_hash]->mean = 0.0;
-			results[tmp_hash]->number_of_measurements = 0;
-			results[tmp_hash]->sum = 0.0;
-
-			strcpy(results[tmp_hash]->name, tmp_station.name);
-			results[tmp_hash]->min = tmp_station.last_value;
-			results[tmp_hash]->max = tmp_station.last_value;
-			results[tmp_hash]->mean = tmp_station.last_value;
-			results[tmp_hash]->number_of_measurements++;
-			results[tmp_hash]->sum += tmp_station.last_value;
-
+			insert(tmp_hash, &tmp_station,  results);
 		}
 
 	}
@@ -158,19 +132,20 @@ int main(int argc, char **argv)
 	
 	/*Print out the result */
 	for(int i=0;i<station_count;i++) {
-		printf("%s;%.2lf;%.2lf;%.2lf\n", sorted_stations[i].name, sorted_stations[i].min, sorted_stations[i].mean, sorted_stations[i].max);
+		printf("%s;%.2lf;%.2lf;%.2lf;%d\n", 
+						sorted_stations[i].name,
+						sorted_stations[i].min,
+						sorted_stations[i].mean,
+						sorted_stations[i].max,
+						sorted_stations[i].number_of_measurements);
 	}
 	
 	/* Free memory from the results hash table */
-	for(int i=0;i<MAX_STATIONS;i++)
-		free(lost_pointers[i]);
-
 	free(sorted_stations);
 	
-	/*Calculate the time to perform the task and print the result */
-	time(&stop_time);
-	printf("\nExecution time %.2f seconds\n", difftime(stop_time, start_time));
-
+	for(int i=0;i<MAX_STATIONS;i++)
+		free(results[i]);
+	
 	return EXIT_SUCCESS;
 }
 
@@ -206,6 +181,22 @@ struct station *search(char *key, struct station *hash_table[])
 	return NULL;
 }
 
+/*
+*	Inserts a new node into the hash table.
+*	Checks first if the index defined by the
+*	hash value is empty.
+*
+*/
+void insert(unsigned int hash_value, struct station *key,  struct station *hash_table[])
+{
+
+	while(hash_table[hash_value] != NULL) {
+		++hash_value;
+		hash_value %= MAX_STATIONS;
+	}
+	hash_table[hash_value]  = (struct station *) malloc(sizeof(struct station));
+	*hash_table[hash_value] = *key;
+}
 /*
  * Compares the struct station names and using strcmp.
  * This function is used by qsort()

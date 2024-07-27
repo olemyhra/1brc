@@ -32,8 +32,6 @@ set(GCC_FLAGS
 	-std=c99
 	-pedantic
 	-O2
-	-g
-	-pg
 )
 
 set(GCC_LINK_FLAGS
