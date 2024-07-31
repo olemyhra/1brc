@@ -132,12 +132,11 @@ int main(int argc, char **argv)
 	
 	/*Print out the result */
 	for(int i=0;i<station_count;i++) {
-		printf("%s;%.2lf;%.2lf;%.2lf;%d\n", 
+		printf("%s;%.2lf;%.2lf;%.2lf\n", 
 						sorted_stations[i].name,
 						sorted_stations[i].min,
 						sorted_stations[i].mean,
-						sorted_stations[i].max,
-						sorted_stations[i].number_of_measurements);
+						sorted_stations[i].max);
 	}
 	
 	/* Free memory from the results hash table */
